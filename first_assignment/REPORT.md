@@ -73,7 +73,7 @@ def extract_path_of_dependency_relations(sentence: str) -> List[List[str]]:
     return sentence_dependency_relations
 ```
 
-To do that, the sentence is first parsed to get Doc object of spaCy.
+To do that, the sentence is first parsed to get a Doc object of spaCy.
 A for loop is used to scan all the tokens.
 Using the token's `.dep_` attribute I obtained its dependency relation.
 Using the token's `.head` attribute I obtained its head.
@@ -122,7 +122,7 @@ def extract_dependents_subtree(sentence: str) -> List[List[str]]:
     return sentence_dependents_subtrees
 ```
 
-To do that, the sentence is first parsed to get Doc object of spaCy.
+To do that, the sentence is first parsed to get a Doc object of spaCy.
 A for loop is used to scan all the tokens.
 Using the token's `.subtree` attribute I obtained its subtree, it is already in sentence order and with the input word included.
 I add it to the `sentence_dependents_subtrees` list.
@@ -182,9 +182,9 @@ def check_if_tokens_form_a_subtree(sentence: str, tokens: Union[Span, List[Token
     return tokens_form_a_subtree
 ```
 
-The `tokens` attribute type is checked and the if not of type `List[str]` it is converted in that.
+The `tokens` parameter type is checked and the if not of type `List[str]` it is converted in that.
 To obtain all the possible subtrees of the sentence we can use the `extract_dependents_subtree` function by passing the sentence.
-If the tokens variable is present in the `sentence_dependents_subtrees` list returned by the `extract_dependents_subtree` function `True` is returned, if not `False`.
+If the `tokens` parameter is present in the `sentence_dependents_subtrees` list returned by the `extract_dependents_subtree` function `True` is returned, if not `False`.
 
 The output of the `check_if_tokens_form_a_subtree` function for the spans presented before and passed to the function in all the possible types are:
 
@@ -226,7 +226,7 @@ def identify_head_of_a_span(span: Union[Span, List[Token], List[str], str]) -> s
     return root.text
 ```
 
-The tokens attribute type is checked and the if not of type `Span` it is converted in that.
+The `span` parameter type is checked and the if not of type `Span` it is converted in that.
 Using the span's `.root` attribute I obtained its root and I returned it.
 
 The output of the `identify_head_of_a_span` function for the example span passed to the function in all the possible types are:
@@ -265,7 +265,7 @@ def extract_nsubj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:
     return nsubj_dobj_iobj
 ```
 
-To do that, the sentence is first parsed to get Doc object of spaCy.
+To do that, the sentence is first parsed to get a Doc object of spaCy.
 A for loop is used to scan all the tokens.
 Using the token's `.dep_` attribute I obtained its dependency relation.
 If the dependency relation is equal to one of the key `'nsubj'`, `'dobj'`, `'iobj'`, using the token's `.subtree` attribute I obtained its subtree, that is converted in a list containing the tokens of the span that is related to the found dependency relation and stored into the `nsubj_dobj_iobj` dictionary.
