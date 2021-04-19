@@ -10,6 +10,10 @@
   - [3. check if a given list of tokens (segment of a sentence) forms a subtree](#3-check-if-a-given-list-of-tokens-segment-of-a-sentence-forms-a-subtree)
   - [4. identify head of a span, given its tokens](#4-identify-head-of-a-span-given-its-tokens)
   - [5. extract sentence subject, direct object and indirect object spans](#5-extract-sentence-subject-direct-object-and-indirect-object-spans)
+- [Training Transition-Based Dependency Parser (Optional & Advanced)](#training-transition-based-dependency-parser-optional--advanced)
+  - [Modify NLTK Transition parser ' s Configuration class to use better features.](#modify-nltk-transition-parser--s-configuration-class-to-use-better-features)
+  - [Evaluate the features comparing performance to the original](#evaluate-the-features-comparing-performance-to-the-original)
+  - [Replace SVM classifier with an alternative of your choice.](#replace-svm-classifier-with-an-alternative-of-your-choice)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -257,7 +261,7 @@ def extract_nsubj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:
                     nsubj_dobj_iobj["nsubj"].extend([subtree_token.text for subtree_token in child.subtree])
                 elif child.dep_ == "dobj":
                     nsubj_dobj_iobj["dobj"].extend([subtree_token.text for subtree_token in child.subtree])
-                elif child.dep_ == "iobj":
+                elif child.dep_ == "dative":  # in spaCy "dative" is used instead of "iobj" (that is deprecated)
                     nsubj_dobj_iobj["iobj"].extend([subtree_token.text for subtree_token in child.subtree])
 
             break
@@ -268,7 +272,7 @@ def extract_nsubj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:
 To do that, the sentence is first parsed to get a Doc object of spaCy.
 A for loop is used to scan all the tokens.
 Using the token's `.dep_` attribute I obtained its dependency relation.
-If the dependency relation is equal to one of the key `'nsubj'`, `'dobj'`, `'iobj'`, using the token's `.subtree` attribute I obtained its subtree, that is converted in a list containing the tokens of the span that is related to the found dependency relation and stored into the `nsubj_dobj_iobj` dictionary.
+If the dependency relation is equal to one of the key `'nsubj'`, `'dobj'`, `'dative'` (used instead of `'iobj'` that is deprecated) using the token's `.subtree` attribute I obtained its subtree, that is converted in a list containing the tokens of the span that is related to the found dependency relation and stored into the `nsubj_dobj_iobj` dictionary.
 I repeat this process for all the tokens in the sentence and in the end I return the `nsubj_dobj_iobj` dictionary.
 
 The output of the `extract_nsubj_dobj_iobj` function for the example sentence is (here is formatted to make it more readable):
@@ -279,4 +283,73 @@ The output of the `extract_nsubj_dobj_iobj` function for the example sentence is
   'dobj': ['a', 'man', 'with', 'a', 'telescope'],
   'iobj': []
 }
+```
+
+
+## Training Transition-Based Dependency Parser (Optional & Advanced)
+
+### Modify NLTK Transition parser ' s Configuration class to use better features.
+
+I created a `MyConfiguration` class extending the original `Configuration` class and I modified the `extract_features` method.
+The token is a dictionary like this:
+
+```python
+{'address': 2, 'word': 'Vinken', 'lemma': 'Vinken', 'ctag': 'NNP', 'tag': 'NNP', 'feats': '', 'head': 8, 'deps': defaultdict(<class 'list'>, {'': [1, 3, 6, 7]}), 'rel': ''}
+```
+
+Now this method uses almost all these attributes as features (except for `address`, `word` and `ctag`) for the first two tokens in the stack and the first two tokens in the buffer:
+
+```python
+token = self._tokens[stack_idx0]
+if "head" in token and self._check_informative(token["head"]):
+    result.append("STK_0_HEAD_" + str(token["head"]).upper())
+if "lemma" in token and self._check_informative(token["lemma"]):
+    result.append("STK_0_LEMMA_" + token["lemma"].upper())
+if "tag" in token and self._check_informative(token["tag"]):
+    result.append("STK_0_POS_" + token["tag"].upper())
+if "rel" in token and self._check_informative(token["rel"]):
+    result.append("STK_0_REL_" + token["rel"].upper())
+if "deps" in token and token["deps"]:
+    for d in token["deps"]:
+        result.append("STK_0_DEP_" + str(d).upper())
+if "feats" in token and self._check_informative(token["feats"]):
+    feats = token["feats"].split("|")
+    for feat in feats:
+        result.append("STK_0_FEATS_" + feat.upper())
+```
+
+The use of `upper()` is to have case-insensitive features.
+
+I also extracted the tag of the third and fourth token both for stack and buffer:
+
+```python
+token = self._tokens[stack_idx2]
+if self._check_informative(token["tag"]):
+    result.append("STK_2_POS_" + token["tag"].upper())
+```
+
+As was before, I also took the leftmost and rightmost dependency information both for stack and buffer.
+
+Then I created a `MyTransitionParser` class extending the original `TransitionParser` class and I substituted `Configuration` with `MyConfiguration` in the `_create_training_examples_arc_std`, `_create_training_examples_arc_eager` and `parse` methods. 
+
+
+### Evaluate the features comparing performance to the original
+
+I evaluated the performance with reference to the original parser and I got a slight improvement:
+
+```markdown
+The scores of the standard TransitionParser are: (0.7791666666666667, 0.7791666666666667)
+The scores of MyTransitionParser are: (0.8166666666666667, 0.8166666666666667)
+```
+
+
+### Replace SVM classifier with an alternative of your choice.
+
+I created a `MyGBCTransitionParser` class extending the `MyTransitionParser` class and I tried to use `GradientBoostingClassifier` instead of `SVC` and the results was pretty good, in particular if compared with the original `TransitionParser`.
+I chose the `GradientBoostingClassifier` because it is easy and really fast if compared to the `SVC` classifier. I evaluated the performance and it allows a better optimization and higher scores:
+
+```markdown
+The scores of the standard TransitionParser are: (0.7791666666666667, 0.7791666666666667)
+The scores of MyTransitionParser are: (0.8166666666666667, 0.8166666666666667)
+The scores of MyGBCTransitionParser are: (0.8458333333333333, 0.8458333333333333)
 ```
