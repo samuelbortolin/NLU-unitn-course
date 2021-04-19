@@ -26,18 +26,10 @@
 
 ### Required Python Packages
 
-Required Python packages can be installed using one of the following commands:
-
-* using `pip`:
+Required Python packages can be installed running the following command:
 
 ```bash
     pip3 install -r requirements.txt
-```
-
-* using `conda`:
-
-```bash
-    conda install --file requirements.txt
 ```
 
 Once the requirements are installed, the code requires the English models that could be installed running: 
@@ -49,7 +41,7 @@ Once the requirements are installed, the code requires the English models that c
 
 ## Usage
 
-The main script to test the functions and see the results of the transition-based dependency parser can be run using the following command:
+The main script to test the functions and see the results of the transition-based dependency parser can be run with the following command:
 
 ```bash
     python3 main.py

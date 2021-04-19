@@ -17,7 +17,7 @@
 
 Repository for the Natural Language Understanding course @ University of Trento.
 
-My Artificial Intelligence Systems student information:
+My information as Artificial Intelligence Systems student:
 
 * Name: `Samuel`
 * Surname: `Bortolin`
@@ -52,7 +52,7 @@ My Artificial Intelligence Systems student information:
 
 ### Installation
 
-This repository can be cloned using the command:
+This repository can be cloned running the following command:
 
 ```bash
     git clone https://github.com/samuelbortolin/NLU-unitn-course.git
@@ -61,19 +61,19 @@ This repository can be cloned using the command:
 
 ### Python
 
-To run this project is necessary to have [`Python`](https://www.python.org/) installed, the minimum version compatible is `3.6`, this code is developed with the version [`3.8.8`](https://www.python.org/downloads/release/python-388/).
+To run this project is necessary to have [`Python`](https://www.python.org/) installed, the minimum version compatible is `3.6`, this code is developed using the [`3.8.8`](https://www.python.org/downloads/release/python-388/) version.
 
 
 ## Usage
 
 ### First Assignment
 
-Please read the information regarding the final project in [`first_assignment/README.md`](first_assignment/README.md).
+Please read the information regarding the first assignment in [`first_assignment/README.md`](first_assignment/README.md).
 
 
 ### Second Assignment
 
-Please read the information regarding the final project in [`second_assignment/README.md`](second_assignment/README.md).
+Please read the information regarding the second assignment in [`second_assignment/README.md`](second_assignment/README.md).
 
 
 ### Final Project

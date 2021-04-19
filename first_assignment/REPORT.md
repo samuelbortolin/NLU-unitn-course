@@ -46,9 +46,9 @@ I also added some `print` when executing the main code in order to show the resu
 The following functions are tested with the following example sentence and the following spans:
 
 ```python
-    example_sentence: str = "I saw a man with a telescope, he was looking at the Moon."
-    example_span: Span = spacy_nlp(example_sentence)[2:7]
-    wrong_span: Span = spacy_nlp(example_sentence)[5:8]
+example_sentence: str = "I saw a man with a telescope, he was looking at the Moon."
+example_span: Span = spacy_nlp(example_sentence)[2:7]
+wrong_span: Span = spacy_nlp(example_sentence)[5:8]
 ```
 
 
@@ -300,22 +300,22 @@ The token is a dictionary like this:
 Now this method uses almost all these attributes as features (except for `address`, `word` and `ctag`) for the first two tokens in the stack and the first two tokens in the buffer:
 
 ```python
-token = self._tokens[stack_idx0]
-if "head" in token and self._check_informative(token["head"]):
-    result.append("STK_0_HEAD_" + str(token["head"]).upper())
-if "lemma" in token and self._check_informative(token["lemma"]):
-    result.append("STK_0_LEMMA_" + token["lemma"].upper())
-if "tag" in token and self._check_informative(token["tag"]):
-    result.append("STK_0_POS_" + token["tag"].upper())
-if "rel" in token and self._check_informative(token["rel"]):
-    result.append("STK_0_REL_" + token["rel"].upper())
-if "deps" in token and token["deps"]:
-    for d in token["deps"]:
-        result.append("STK_0_DEP_" + str(d).upper())
-if "feats" in token and self._check_informative(token["feats"]):
-    feats = token["feats"].split("|")
-    for feat in feats:
-        result.append("STK_0_FEATS_" + feat.upper())
+    token = self._tokens[stack_idx0]
+    if "head" in token and self._check_informative(token["head"]):
+        result.append("STK_0_HEAD_" + str(token["head"]).upper())
+    if "lemma" in token and self._check_informative(token["lemma"]):
+        result.append("STK_0_LEMMA_" + token["lemma"].upper())
+    if "tag" in token and self._check_informative(token["tag"]):
+        result.append("STK_0_POS_" + token["tag"].upper())
+    if "rel" in token and self._check_informative(token["rel"]):
+        result.append("STK_0_REL_" + token["rel"].upper())
+    if "deps" in token and token["deps"]:
+        for d in token["deps"]:
+            result.append("STK_0_DEP_" + str(d).upper())
+    if "feats" in token and self._check_informative(token["feats"]):
+        feats = token["feats"].split("|")
+        for feat in feats:
+            result.append("STK_0_FEATS_" + feat.upper())
 ```
 
 The use of `upper()` is to have case-insensitive features.
@@ -323,9 +323,9 @@ The use of `upper()` is to have case-insensitive features.
 I also extracted the tag of the third and fourth token both for stack and buffer:
 
 ```python
-token = self._tokens[stack_idx2]
-if self._check_informative(token["tag"]):
-    result.append("STK_2_POS_" + token["tag"].upper())
+    token = self._tokens[stack_idx2]
+    if self._check_informative(token["tag"]):
+        result.append("STK_2_POS_" + token["tag"].upper())
 ```
 
 As was before, I also took the leftmost and rightmost dependency information both for stack and buffer.
