@@ -245,41 +245,41 @@ The head of this example span `['a', 'man', 'with', 'a', 'telescope']` (passing 
 
 ### 5. extract sentence subject, direct object and indirect object spans
 
-The `extract_nsubj_dobj_iobj` function takes as input parameter `sentence` (that must be string, otherwise a `TypeError` is raised) and returns a dictionary containing as key the possible dependency relations `'nsubj'`, `'dobj'`, `'iobj'` and as value a list containing the tokens of the span that is related to the dependency relation expressed by the key (if a dependency relation is not present its associated list will be empty).
+The `extract_subj_dobj_iobj` function takes as input parameter `sentence` (that must be string, otherwise a `TypeError` is raised) and returns a dictionary containing as key the possible dependency relations `'subj'`, `'dobj'`, `'iobj'` and as value a list containing the tokens of the span that is related to the dependency relation expressed by the key (if a dependency relation is not present its associated list will be empty).
 
 ```python
-def extract_nsubj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:
+def extract_subj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:
     if not isinstance(sentence, str):
         raise TypeError("You pass a `sentence` parameter of a wrong type")
 
     spacy_doc: Doc = spacy_nlp(sentence)  # parse the input sentence and get a Doc object of spaCy
-    nsubj_dobj_iobj: Dict[str, List[str]] = dict({"nsubj": list(), "dobj": list(), "iobj": list()})  # output is dict of lists of words that form a span for subject, direct object, and indirect object (if present, otherwise empty)
+    subj_dobj_iobj: Dict[str, List[str]] = dict({"subj": list(), "dobj": list(), "iobj": list()})  # output is dict of lists of words that form a span for subject, direct object, and indirect object (if present, otherwise empty)
     for token in spacy_doc:
         if token.dep_ == "ROOT":
             for child in token.children:
-                if child.dep_ == "nsubj":
-                    nsubj_dobj_iobj["nsubj"].extend([subtree_token.text for subtree_token in child.subtree])
+                if child.dep_ == "nsubj" or child.dep_ == "nsubjpass" or child.dep_ == "csubj" or child.dep_ == "csubjpass" or child.dep_ == "expl":
+                    subj_dobj_iobj["subj"].extend([subtree_token.text for subtree_token in child.subtree])
                 elif child.dep_ == "dobj":
-                    nsubj_dobj_iobj["dobj"].extend([subtree_token.text for subtree_token in child.subtree])
+                    subj_dobj_iobj["dobj"].extend([subtree_token.text for subtree_token in child.subtree])
                 elif child.dep_ == "dative":  # in spaCy "dative" is used instead of "iobj" (that is deprecated)
-                    nsubj_dobj_iobj["iobj"].extend([subtree_token.text for subtree_token in child.subtree])
+                    subj_dobj_iobj["iobj"].extend([subtree_token.text for subtree_token in child.subtree])
 
             break
 
-    return nsubj_dobj_iobj
+    return subj_dobj_iobj
 ```
 
 To do that, the sentence is first parsed to get a Doc object of spaCy.
 A for loop is used to scan all the tokens.
 Using the token's `.dep_` attribute I obtained its dependency relation.
-If the dependency relation is equal to one of the key `'nsubj'`, `'dobj'`, `'dative'` (used instead of `'iobj'` that is deprecated) using the token's `.subtree` attribute I obtained its subtree, that is converted in a list containing the tokens of the span that is related to the found dependency relation and stored into the `nsubj_dobj_iobj` dictionary.
-I repeat this process for all the tokens in the sentence and in the end I return the `nsubj_dobj_iobj` dictionary.
+If a dependency relation of the root token's children is equal to one of the key `'nsubj'`, `'nsubjpass'`, `'csubj'`, `'csubjpass'`, `'expl'`, `'dobj'`, `'dative'` (used instead of `'iobj'` that is deprecated) using the token's `.subtree` attribute I obtained its subtree, that is converted in a list containing the tokens of the span that is related to the found dependency relation and stored into the `subj_dobj_iobj` dictionary.
+I repeat this process for all the tokens in the sentence and in the end I return the `subj_dobj_iobj` dictionary.
 
-The output of the `extract_nsubj_dobj_iobj` function for the example sentence is (here is formatted to make it more readable):
+The output of the `extract_subj_dobj_iobj` function for the example sentence is (here is formatted to make it more readable):
 
 ```python
 {
-  'nsubj': ['I'],
+  'subj': ['I'],
   'dobj': ['a', 'man', 'with', 'a', 'telescope'],
   'iobj': []
 }
@@ -335,7 +335,7 @@ Then I created a `MyTransitionParser` class extending the original `TransitionPa
 
 ### Evaluate the features comparing performance to the original
 
-I evaluated the performance with reference to the original parser and I got a slight improvement:
+I evaluated the performance with reference to the original parser, using `dependency_treebank.parsed_sents()[:100]` as training set and `dependency_treebank.parsed_sents()[-10:]` as test set, and I got a slight improvement:
 
 ```markdown
 The scores of the standard TransitionParser are: (0.7791666666666667, 0.7791666666666667)
@@ -346,7 +346,7 @@ The scores of MyTransitionParser are: (0.8166666666666667, 0.8166666666666667)
 ### Replace SVM classifier with an alternative of your choice.
 
 I created a `MyGBCTransitionParser` class extending the `MyTransitionParser` class and I tried to use `GradientBoostingClassifier` instead of `SVC` and the results was pretty good, in particular if compared with the original `TransitionParser`.
-I chose the `GradientBoostingClassifier` because it is easy and really fast if compared to the `SVC` classifier. I evaluated the performance and it allows a better optimization and higher scores:
+I chose the `GradientBoostingClassifier` because it is easy and really fast if compared to the `SVC` classifier. I evaluated the performance using `dependency_treebank.parsed_sents()[:100]` as training set and `dependency_treebank.parsed_sents()[-10:]` as test set and it allows a better optimization and higher scores:
 
 ```markdown
 The scores of the standard TransitionParser are: (0.7791666666666667, 0.7791666666666667)

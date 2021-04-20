@@ -15,7 +15,6 @@
 ## Structure
 
     first_assignment
-    ├── data                    [data directory]
     ├── main                    [script containing the main code and functions implemented]
     ├── README                  [readme with instructions for running the code]
     ├── report                  [report briefly describing the logic behind the code]

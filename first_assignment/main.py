@@ -104,25 +104,25 @@ def identify_head_of_a_span(span: Union[Span, List[Token], List[str], str]) -> s
 
 
 # 5. extract sentence subject, direct object and indirect object spans
-def extract_nsubj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:
+def extract_subj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:
     if not isinstance(sentence, str):
         raise TypeError("You pass a `sentence` parameter of a wrong type")
 
     spacy_doc: Doc = spacy_nlp(sentence)  # parse the input sentence and get a Doc object of spaCy
-    nsubj_dobj_iobj: Dict[str, List[str]] = dict({"nsubj": list(), "dobj": list(), "iobj": list()})  # output is dict of lists of words that form a span for subject, direct object, and indirect object (if present, otherwise empty)
+    subj_dobj_iobj: Dict[str, List[str]] = dict({"subj": list(), "dobj": list(), "iobj": list()})  # output is dict of lists of words that form a span for subject, direct object, and indirect object (if present, otherwise empty)
     for token in spacy_doc:
         if token.dep_ == "ROOT":
             for child in token.children:
-                if child.dep_ == "nsubj":
-                    nsubj_dobj_iobj["nsubj"].extend([subtree_token.text for subtree_token in child.subtree])
+                if child.dep_ == "nsubj" or child.dep_ == "nsubjpass" or child.dep_ == "csubj" or child.dep_ == "csubjpass" or child.dep_ == "expl":
+                    subj_dobj_iobj["subj"].extend([subtree_token.text for subtree_token in child.subtree])
                 elif child.dep_ == "dobj":
-                    nsubj_dobj_iobj["dobj"].extend([subtree_token.text for subtree_token in child.subtree])
+                    subj_dobj_iobj["dobj"].extend([subtree_token.text for subtree_token in child.subtree])
                 elif child.dep_ == "dative":  # in spaCy "dative" is used instead of "iobj" (that is deprecated)
-                    nsubj_dobj_iobj["iobj"].extend([subtree_token.text for subtree_token in child.subtree])
+                    subj_dobj_iobj["iobj"].extend([subtree_token.text for subtree_token in child.subtree])
 
             break
 
-    return nsubj_dobj_iobj
+    return subj_dobj_iobj
 
 
 if __name__ == "__main__":
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     print()
 
     print("5. extract sentence subject, direct object and indirect object spans:")
-    print(extract_nsubj_dobj_iobj(example_sentence))
+    print(extract_subj_dobj_iobj(example_sentence))
     print()
 
     # Training Transition-Based Dependency Parser (Optional & Advanced)
