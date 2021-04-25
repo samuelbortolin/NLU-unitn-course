@@ -19,7 +19,6 @@ spacy_nlp: Language = spacy.load("en_core_web_sm")
 # Working with Dependency Graphs (Parses)
 
 # 1. extract a path of dependency relations from the ROOT to a token
-
 def extract_path_of_dependency_relations(sentence: str) -> List[List[str]]:
     if not isinstance(sentence, str):
         raise TypeError("You pass a `sentence` parameter of a wrong type")
@@ -166,7 +165,7 @@ if __name__ == "__main__":
 
     # Training Transition-Based Dependency Parser (Optional & Advanced)
 
-    # Modify NLTK Transition parser ' s Configuration class to use better features.
+    # Modify NLTK Transition parser ' s Configuration class to use better features
     class MyConfiguration(Configuration):
 
         def extract_features(self):
@@ -520,7 +519,7 @@ if __name__ == "__main__":
     print(f"The scores of MyTransitionParser are: {dependency_evaluator.eval()}")
     print()
 
-    # Replace SVM classifier with an alternative of your choice.
+    # Replace SVM classifier with an alternative of your choice
     class MyGBCTransitionParser(MyTransitionParser):
 
         def train(self, depgraphs, modelfile, verbose=True):

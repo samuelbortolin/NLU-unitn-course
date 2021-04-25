@@ -11,9 +11,9 @@
   - [4. identify head of a span, given its tokens](#4-identify-head-of-a-span-given-its-tokens)
   - [5. extract sentence subject, direct object and indirect object spans](#5-extract-sentence-subject-direct-object-and-indirect-object-spans)
 - [Training Transition-Based Dependency Parser (Optional & Advanced)](#training-transition-based-dependency-parser-optional--advanced)
-  - [Modify NLTK Transition parser ' s Configuration class to use better features.](#modify-nltk-transition-parser--s-configuration-class-to-use-better-features)
+  - [Modify NLTK Transition parser ' s Configuration class to use better features](#modify-nltk-transition-parser--s-configuration-class-to-use-better-features)
   - [Evaluate the features comparing performance to the original](#evaluate-the-features-comparing-performance-to-the-original)
-  - [Replace SVM classifier with an alternative of your choice.](#replace-svm-classifier-with-an-alternative-of-your-choice)
+  - [Replace SVM classifier with an alternative of your choice](#replace-svm-classifier-with-an-alternative-of-your-choice)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -32,9 +32,9 @@ Define functions to:
 
 **Training Transition-Based Dependency Parser (Optional & Advanced)**
 
-* Modify [NLTK Transition parser](https://github.com/nltk/nltk/blob/develop/nltk/parse/transitionparser.py) ' s `Configuration` class to use better features.
+* Modify [NLTK Transition parser](https://github.com/nltk/nltk/blob/develop/nltk/parse/transitionparser.py) ' s `Configuration` class to use better features
 * Evaluate the features comparing performance to the original
-* Replace `SVM` classifier with an alternative of your choice.
+* Replace `SVM` classifier with an alternative of your choice
 
 
 ## Working with Dependency Graphs (Parses)
@@ -289,7 +289,7 @@ The output of the `extract_subj_dobj_iobj` function for the example sentence is 
 
 ## Training Transition-Based Dependency Parser (Optional & Advanced)
 
-### Modify NLTK Transition parser ' s Configuration class to use better features.
+### Modify NLTK Transition parser ' s Configuration class to use better features
 
 I created a `MyConfiguration` class extending the original `Configuration` class and I modified the `extract_features` method.
 The token is a dictionary like this:
@@ -344,7 +344,7 @@ The scores of MyTransitionParser are: (0.8166666666666667, 0.8166666666666667)
 ```
 
 
-### Replace SVM classifier with an alternative of your choice.
+### Replace SVM classifier with an alternative of your choice
 
 I created a `MyGBCTransitionParser` class extending the `MyTransitionParser` class and I tried to use `GradientBoostingClassifier` instead of `SVC` and the results was pretty good, in particular if compared with the original `TransitionParser`.
 I chose the `GradientBoostingClassifier` because it is easy and really fast if compared to the `SVC` classifier. I evaluated the performance using `dependency_treebank.parsed_sents()[:100]` as training set and `dependency_treebank.parsed_sents()[-10:]` as test set and in this particular case it allows a better optimization and higher scores:
