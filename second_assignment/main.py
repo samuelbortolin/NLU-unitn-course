@@ -13,7 +13,7 @@ from conll import get_chunks, read_corpus_conll, evaluate
 spacy_nlp: Language = spacy.load("en_core_web_sm")
 
 
-# 0. Evaluate spaCy NER on CoNLL 2003 dataset (provided)
+# 1. Evaluate spaCy NER on CoNLL 2003 dataset (provided)
 
 # spaCy NER labels are different from the one of the CoNLL 2003 dataset, I had to convert some of them and ignore others.
 print(f"spaCy NER labels: {spacy_nlp.get_pipe('ner').labels}")
@@ -42,7 +42,7 @@ spacy_ner_label_to_conll: Dict[str, str] = {
 }
 
 
-# 1. Grouping of Entities.
+# 2. Grouping of Entities
 
 # function to group recognized named entities using `noun_chunks` method of spaCy
 def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -> List[List[str]]:
@@ -50,6 +50,9 @@ def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -
         doc: Doc = spacy_nlp(doc)  # Since both `ents` and `noun_chunks` are properties of `Doc` object
     elif not isinstance(doc, Doc):
         raise TypeError("You pass a `doc` parameter of a wrong type")
+
+    if not isinstance(use_conll_labels, bool):
+        raise TypeError("You pass a `use_conll_labels` parameter of a wrong type")
 
     noun_chunks: List[Span] = []
     for noun_chunk in doc.noun_chunks:
@@ -70,20 +73,13 @@ def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -
                 grouped_entities.append(entity_group)
                 entity_group: List[str] = []
                 chunk += 1
-                try:
-                    if ent in noun_chunks[chunk].ents:
-                        if use_conll_labels:
-                            if spacy_ner_label_to_conll[ent.label_]:
-                                entity_group.append(spacy_ner_label_to_conll[ent.label_])
-                        else:
-                            entity_group.append(ent.label_)
-                    else:  # some entities may be not within `noun_chunk` spans
-                        if use_conll_labels:
-                            if spacy_ner_label_to_conll[ent.label_]:
-                                grouped_entities.append([spacy_ner_label_to_conll[ent.label_]])
-                        else:
-                            grouped_entities.append([ent.label_])
-                except IndexError:  # some entities may be not within `noun_chunk` spans
+                if ent in noun_chunks[chunk].ents:
+                    if use_conll_labels:
+                        if spacy_ner_label_to_conll[ent.label_]:
+                            entity_group.append(spacy_ner_label_to_conll[ent.label_])
+                    else:
+                        entity_group.append(ent.label_)
+                else:  # some entities may be not within `noun_chunk` spans
                     if use_conll_labels:
                         if spacy_ner_label_to_conll[ent.label_]:
                             grouped_entities.append([spacy_ner_label_to_conll[ent.label_]])
@@ -108,36 +104,51 @@ def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -
     return grouped_entities  # the output is a list-of-lists where outer list is the list of groups/chunks and the inner lists are lists of entity labels
 
 
-# 2. Fix segmentation errors.
+# 3. Fix segmentation errors
 
 # function that extends the entity span to cover the full noun-compounds
-def extend_entity_span(doc: Union[str, Doc], use_conll_labels: bool = False) -> List[Tuple[str, str]]:
+def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, use_children_compound: bool = False, use_conll_labels: bool = False) -> List[Tuple[str, str]]:
     if isinstance(doc, str):
         doc: Doc = spacy_nlp(doc)  # Since `ents` are a property of `Doc` object and with it we have access to all sentence's tokens
     elif not isinstance(doc, Doc):
         raise TypeError("You pass a `doc` parameter of a wrong type")
+
+    if not isinstance(use_head_compound, bool):
+        raise TypeError("You pass a `use_head_compound` parameter of a wrong type")
+
+    if not isinstance(use_children_compound, bool):
+        raise TypeError("You pass a `use_children_compound` parameter of a wrong type")
+
+    if not isinstance(use_conll_labels, bool):
+        raise TypeError("You pass a `use_conll_labels` parameter of a wrong type")
 
     entities: Dict[int, Tuple[str, str]] = {}
     for ent in doc.ents:
         entity: Dict[int, str] = {}
         for entity_token in ent:
             entity[entity_token.i] = entity_token.text
-            for child in entity_token.children:
-                if child.dep_ == "compound":  # find the tokens having a `compound` dependency relation with a token of the entity
-                    entity[child.i] = child.text
-            keys: List[int] = list(entity.keys())
-            keys.sort()
+            if use_head_compound:
+                if entity_token.dep_ == "compound":  # find if the entity tokens are in `compound` dependency relation with other tokens
+                    entity[entity_token.head.i] = entity_token.head.text
+            if use_children_compound:
+                for child in entity_token.children:
+                    if child.dep_ == "compound":  # find the child tokens having a `compound` dependency relation with the entity tokens
+                        entity[child.i] = child.text
+
+        keys: List[int] = list(entity.keys())
+        keys.sort()
+        if use_conll_labels:
+            if spacy_ner_label_to_conll[ent.label_]:
+                entities[keys.pop(0)] = (entity[keys[0]], f"B-{spacy_ner_label_to_conll[ent.label_]}")
+        else:
+            entities[keys.pop(0)] = (entity[keys[0]], f"B-{ent.label_}")
+
+        for key in keys:
             if use_conll_labels:
                 if spacy_ner_label_to_conll[ent.label_]:
-                    entities[keys.pop(0)] = (entity[keys[0]], f"B-{spacy_ner_label_to_conll[ent.label_]}")
+                    entities[key] = (entity[key], f"I-{spacy_ner_label_to_conll[ent.label_]}")
             else:
-                entities[keys.pop(0)] = (entity[keys[0]], f"B-{ent.label_}")
-            for key in keys:
-                if use_conll_labels:
-                    if spacy_ner_label_to_conll[ent.label_]:
-                        entities[key] = (entity[key], f"I-{spacy_ner_label_to_conll[ent.label_]}")
-                else:
-                    entities[key] = (entity[key], f"I-{ent.label_}")
+                entities[key] = (entity[key], f"I-{ent.label_}")
 
     extended_entity_spans: List[Tuple[str, str]] = []
     for doc_token in doc:
@@ -156,7 +167,7 @@ if __name__ == "__main__":
 
     spacy_hyps: List[Doc] = []
     for ref in refs:
-        sentence = ""
+        sentence: str = ""
         for text, iob in ref:
             sentence = sentence + text + " "
         spacy_hyps.append(spacy_nlp(sentence))
@@ -224,35 +235,83 @@ if __name__ == "__main__":
 
     # test function to extends the entity span to cover the full noun-compounds
     print("result of `extend_entity_span` on `Apple's Steve Jobs died in 2011 in Palo Alto, California.`:")
-    print(extend_entity_span("Apple's Steve Jobs died in 2011 in Palo Alto, California."))
+    print(extend_entity_span("Apple's Steve Jobs died in 2011 in Palo Alto, California.", use_head_compound=True, use_children_compound=True))
     print()
 
     # evaluate the post-processing on CoNLL 2003 dataset
-    hyps: List[List[Tuple[str, str]]] = []
+    hyps_head: List[List[Tuple[str, str]]] = []
+    hyps_children: List[List[Tuple[str, str]]] = []
+    hyps_head_and_children: List[List[Tuple[str, str]]] = []
     for spacy_hyp in spacy_hyps:
-        extended_entity_span = extend_entity_span(spacy_hyp, use_conll_labels=True)
-        hyp: List[Tuple[str, str]] = []
-        unified_token: List[str, str] = []
+        extended_entity_span_head = extend_entity_span(spacy_hyp, use_head_compound=True, use_conll_labels=True)
+        extended_entity_span_children = extend_entity_span(spacy_hyp, use_children_compound=True, use_conll_labels=True)
+        extended_entity_span_head_and_children = extend_entity_span(spacy_hyp, use_head_compound=True, use_children_compound=True, use_conll_labels=True)
+        hyp_head: List[Tuple[str, str]] = []
+        hyp_children: List[Tuple[str, str]] = []
+        hyp_head_and_children: List[Tuple[str, str]] = []
+        unified_token_head: List[str, str] = []
+        unified_token_children: List[str, str] = []
+        unified_token_head_and_children: List[str, str] = []
         for token in spacy_hyp:
             if not token.whitespace_:
-                if not unified_token:
-                    unified_token = [token.text, extended_entity_span[token.i][1]]
+                if not unified_token_head:
+                    unified_token_head = [token.text, extended_entity_span_head[token.i][1]]
                 else:
-                    unified_token[0] = unified_token[0] + token.text
+                    unified_token_head[0] = unified_token_head[0] + token.text
+
+                if not unified_token_children:
+                    unified_token_children = [token.text, extended_entity_span_children[token.i][1]]
+                else:
+                    unified_token_children[0] = unified_token_children[0] + token.text
+
+                if not unified_token_head_and_children:
+                    unified_token_head_and_children = [token.text, extended_entity_span_head_and_children[token.i][1]]
+                else:
+                    unified_token_head_and_children[0] = unified_token_head_and_children[0] + token.text
+
             else:
-                if not unified_token:
-                    hyp.append((token.text, extended_entity_span[token.i][1]))
+                if not unified_token_head:
+                    hyp_head.append((token.text, extended_entity_span_head[token.i][1]))
                 else:
-                    unified_token[0] = unified_token[0] + token.text
-                    hyp.append(tuple(unified_token))
-                    unified_token: List[str, str] = []
+                    unified_token_head[0] = unified_token_head[0] + token.text
+                    hyp_head.append(tuple(unified_token_head))
+                    unified_token_head: List[str, str] = []
 
-        hyps.append(hyp)
+                if not unified_token_children:
+                    hyp_children.append((token.text, extended_entity_span_children[token.i][1]))
+                else:
+                    unified_token_children[0] = unified_token_children[0] + token.text
+                    hyp_children.append(tuple(unified_token_children))
+                    unified_token_children: List[str, str] = []
 
-    token_level_performance, chunk_level_performances = evaluate(refs, hyps)
-    print(f"tag-level accuracy: {token_level_performance:.6f}")
+                if not unified_token_head_and_children:
+                    hyp_head_and_children.append((token.text, extended_entity_span_head_and_children[token.i][1]))
+                else:
+                    unified_token_head_and_children[0] = unified_token_head_and_children[0] + token.text
+                    hyp_head_and_children.append(tuple(unified_token_head_and_children))
+                    unified_token_head_and_children: List[str, str] = []
+
+        hyps_head.append(hyp_head)
+        hyps_children.append(hyp_children)
+        hyps_head_and_children.append(hyp_head_and_children)
+
+    token_level_performance, chunk_level_performances = evaluate(refs, hyps_head)
+
+    print(f"tag-level accuracy head: {token_level_performance:.6f}")
+    print("chunk-level performance head:")
+    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
     print()
 
-    print("chunk-level performance:")
+    token_level_performance, chunk_level_performances = evaluate(refs, hyps_children)
+
+    print(f"tag-level accuracy children: {token_level_performance:.6f}")
+    print("chunk-level performance children:")
+    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
+    print()
+
+    token_level_performance, chunk_level_performances = evaluate(refs, hyps_head_and_children)
+
+    print(f"tag-level accuracy head + children: {token_level_performance:.6f}")
+    print("chunk-level performance head + children:")
     print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
     print()
