@@ -5,7 +5,11 @@ Modified version of https://pypi.org/project/conlleval/
 """
 
 
-def stats():
+def tok_stats():
+    return {"cor": 0, "ref": 0}
+
+
+def seg_stats():
     return {"cor": 0, "hyp": 0, "ref": 0}
 
 
@@ -31,9 +35,10 @@ def align_hyp(ref, hyp):
 
 def conlleval(data, otag="O"):
     # token, segment & class level counts for TP, TP+FP, TP+FN
-    tok = stats()
-    seg = stats()
-    cls = {}
+    tok = tok_stats()
+    tok_cls = {}
+    seg = seg_stats()
+    seg_cls = {}
 
     for sent in data:
 
@@ -55,18 +60,21 @@ def conlleval(data, otag="O"):
             ref_b = is_boc(ref, ref_iob, prev_ref, prev_ref_iob, otag)
             hyp_b = is_boc(hyp, hyp_iob, prev_hyp, prev_hyp_iob, otag)
 
-            if not cls.get(ref) and ref:
-                cls[ref] = stats()
+            if not tok_cls.get(token[-2]) and token[-2]:
+                tok_cls[token[-2]] = tok_stats()
 
-            if not cls.get(hyp) and hyp:
-                cls[hyp] = stats()
+            if not seg_cls.get(ref) and ref:
+                seg_cls[ref] = seg_stats()
+
+            if not seg_cls.get(hyp) and hyp:
+                seg_cls[hyp] = seg_stats()
 
             # segment-level counts
             if in_correct:
                 if ref_e and hyp_e and prev_hyp == prev_ref:
                     in_correct = False
                     seg["cor"] += 1
-                    cls[prev_ref]["cor"] += 1
+                    seg_cls[prev_ref]["cor"] += 1
 
                 elif ref_e != hyp_e or hyp != ref:
                     in_correct = False
@@ -76,17 +84,19 @@ def conlleval(data, otag="O"):
 
             if ref_b:
                 seg["ref"] += 1
-                cls[ref]["ref"] += 1
+                seg_cls[ref]["ref"] += 1
 
             if hyp_b:
                 seg["hyp"] += 1
-                cls[hyp]["hyp"] += 1
+                seg_cls[hyp]["hyp"] += 1
 
             # token-level counts
-            if ref == hyp and ref_iob == hyp_iob:
+            if token[-2] == token[-1]:
                 tok["cor"] += 1
+                tok_cls[token[-2]]["cor"] += 1
 
             tok["ref"] += 1
+            tok_cls[token[-2]]["ref"] += 1
 
             prev_ref = ref
             prev_hyp = hyp
@@ -95,9 +105,9 @@ def conlleval(data, otag="O"):
 
         if in_correct:
             seg["cor"] += 1
-            cls[prev_ref]["cor"] += 1
+            seg_cls[prev_ref]["cor"] += 1
 
-    return tok["cor"]/tok["ref"], summarize(seg, cls)
+    return summarize_tok(tok, tok_cls), summarize_seg(seg, seg_cls)
 
 
 def parse_iob(t):
@@ -175,13 +185,23 @@ def score(cor_cnt, hyp_cnt, ref_cnt):
     return {"precision": precision, "recall": recall, "f1 score": f1, "support": ref_cnt}
 
 
-def summarize(seg, cls):
+def summarize_seg(seg, seg_cls):
     # class-level
-    keys = list(cls.keys())
+    keys = list(seg_cls.keys())
     keys.sort()
-    res = {lbl: score(cls[lbl]["cor"], cls[lbl]["hyp"], cls[lbl]["ref"]) for lbl in set(keys)}
+    res = {label: score(seg_cls[label]["cor"], seg_cls[label]["hyp"], seg_cls[label]["ref"]) for label in set(keys)}
     # micro
     res.update({"total": score(seg.get("cor", 0), seg.get("hyp", 0), seg.get("ref", 0))})
+    return res
+
+
+def summarize_tok(tok, tok_cls):
+    # class-level
+    keys = list(tok_cls.keys())
+    keys.sort()
+    res = {label: {"accuracy": tok_cls[label]["cor"]/tok_cls[label]["ref"]} for label in set(keys)}
+    # micro
+    res.update({"total": {"accuracy": tok.get("cor", 0)/tok.get("ref", 0)}})
     return res
 
 

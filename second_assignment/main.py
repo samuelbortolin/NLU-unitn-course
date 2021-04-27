@@ -15,7 +15,7 @@ spacy_nlp: Language = spacy.load("en_core_web_sm")
 
 # 1. Evaluate spaCy NER on CoNLL 2003 dataset (provided)
 
-# spaCy NER labels are different from the one of the CoNLL 2003 dataset, I had to convert some of them and ignore others.
+# spaCy NER labels are different from the one of the CoNLL 2003 dataset, I had to convert some of them and ignore others
 print(f"spaCy NER labels: {spacy_nlp.get_pipe('ner').labels}")
 print(f"CoNLL 2003 labels: {get_chunks('data/conll2003/test.txt', fs=' ', otag='O')}")
 print()
@@ -47,7 +47,7 @@ spacy_ner_label_to_conll: Dict[str, str] = {
 # function to group recognized named entities using `noun_chunks` method of spaCy
 def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -> List[List[str]]:
     if isinstance(doc, str):
-        doc: Doc = spacy_nlp(doc)  # Since both `ents` and `noun_chunks` are properties of `Doc` object
+        doc: Doc = spacy_nlp(doc)  # since both `ents` and `noun_chunks` are properties of `Doc` object
     elif not isinstance(doc, Doc):
         raise TypeError("You pass a `doc` parameter of a wrong type")
 
@@ -109,7 +109,7 @@ def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -
 # function that extends the entity span to cover the full noun-compounds
 def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, use_children_compound: bool = False, use_conll_labels: bool = False) -> List[Tuple[str, str]]:
     if isinstance(doc, str):
-        doc: Doc = spacy_nlp(doc)  # Since `ents` are a property of `Doc` object and with it we have access to all sentence's tokens
+        doc: Doc = spacy_nlp(doc)  # since `ents` are a property of `Doc` object and with it we have access to all sentence's tokens
     elif not isinstance(doc, Doc):
         raise TypeError("You pass a `doc` parameter of a wrong type")
 
@@ -195,7 +195,8 @@ if __name__ == "__main__":
     token_level_performance, chunk_level_performances = evaluate(refs, hyps)
 
     # token-level performance (per class and total)
-    print(f"tag-level accuracy: {token_level_performance:.6f}")
+    print(f"tag-level accuracy:")
+    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
     print()
 
     # chunk-level performance (per class and total)
@@ -205,7 +206,7 @@ if __name__ == "__main__":
 
     # test function to group recognized named entities using `noun_chunks` method of spaCy
     print("result of `group_named_entities` on `Apple's Steve Jobs died in 2011 in Palo Alto, California.`:")
-    print(group_named_entities("Apple's Steve Jobs died in 2011 in Palo Alto, California."))
+    print(group_named_entities("Apple's Steve Jobs died in 2011 in Palo Alto, California.", use_conll_labels=False))
     print()
 
     # analyze the groups in terms of most frequent combinations (i.e. NER types that go together)
@@ -225,11 +226,11 @@ if __name__ == "__main__":
             else:
                 frequency_analysis_conll_labels[tuple(entity_list)] = 1
 
-    print("frequency analysis:")
+    print("frequency analysis of the groups in CoNLL 2003:")
     print(frequency_analysis)
     print()
 
-    print("frequency analysis using CoNLL 2003 dataset labels:")
+    print("frequency analysis of the groups in CoNLL 2003 using CoNLL 2003 dataset labels:")
     print(frequency_analysis_conll_labels)
     print()
 
@@ -297,21 +298,30 @@ if __name__ == "__main__":
 
     token_level_performance, chunk_level_performances = evaluate(refs, hyps_head)
 
-    print(f"tag-level accuracy head: {token_level_performance:.6f}")
+    print(f"tag-level accuracy head:")
+    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
+    print()
+
     print("chunk-level performance head:")
     print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
     print()
 
     token_level_performance, chunk_level_performances = evaluate(refs, hyps_children)
 
-    print(f"tag-level accuracy children: {token_level_performance:.6f}")
+    print(f"tag-level accuracy children:")
+    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
+    print()
+
     print("chunk-level performance children:")
     print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
     print()
 
     token_level_performance, chunk_level_performances = evaluate(refs, hyps_head_and_children)
 
-    print(f"tag-level accuracy head + children: {token_level_performance:.6f}")
+    print(f"tag-level accuracy head + children:")
+    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
+    print()
+
     print("chunk-level performance head + children:")
     print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
     print()

@@ -12,7 +12,7 @@
   - [analyze the groups in terms of most frequent combinations (i.e. NER types that go together)](#analyze-the-groups-in-terms-of-most-frequent-combinations-ie-ner-types-that-go-together)
 - [3. Fix segmentation errors](#3-fix-segmentation-errors)
   - [function that extends the entity span to cover the full noun-compounds](#function-that-extends-the-entity-span-to-cover-the-full-noun-compounds)
-  - [evaluate the post-processing on CoNLL 2003 data](#evaluate-the-post-processing-on-conll-2003-data)
+  - [evaluate the post-processing on CoNLL 2003 dataset](#evaluate-the-post-processing-on-conll-2003-dataset)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -60,7 +60,7 @@ spacy_ner_label_to_conll: Dict[str, str] = {
 }
 ```
 
-Also the tokenization of spaCy is different from the one of the CoNLL 2003 dataset, I had to align them. To do so, after loading the data I reconstruct the sentences and build the previuos tokenization using the token's `.whitepace_` attribute:
+Also the tokenization of spaCy is different from the one of the CoNLL 2003 dataset, I had to align them. To do so, after loading the data I reconstruct the sentences and build the previous tokenization using the token's `.whitepace_` attribute:
 
 ```python
     test_sentences = read_corpus_conll("data/conll2003/test.txt", fs=" ")
@@ -99,10 +99,20 @@ In the end to make the hypothesis comparable with references, I unified the enti
 
 ### token-level performance
 
-The accuracy of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got is:
+The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got are:
 
 ```python
-tag-level accuracy: 0.910063
+        accuracy
+B-LOC   0.682254
+B-MISC  0.548433
+B-ORG   0.309452
+B-PER   0.628942
+I-LOC   0.560311
+I-MISC  0.324074
+I-ORG   0.514970
+I-PER   0.788062
+O       0.981999
+total   0.910063
 ```
 
 
@@ -111,7 +121,6 @@ tag-level accuracy: 0.910063
 The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got are:
 
 ```python
-chunk-level performance:
        precision    recall  f1 score  support
 LOC     0.747832  0.672062  0.707925     1668
 MISC    0.810235  0.541311  0.649018      702
@@ -130,7 +139,7 @@ The `group_named_entities` function takes as input parameter `doc` (that must be
 ```python
 def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -> List[List[str]]:
     if isinstance(doc, str):
-        doc: Doc = spacy_nlp(doc)  # Since both `ents` and `noun_chunks` are properties of `Doc` object
+        doc: Doc = spacy_nlp(doc)  # since both `ents` and `noun_chunks` are properties of `Doc` object
     elif not isinstance(doc, Doc):
         raise TypeError("You pass a `doc` parameter of a wrong type")
 
@@ -191,8 +200,8 @@ To do that, the doc is first parsed to get a Doc object of spaCy unless it is no
 A for loop is used to get all noun_chunks using the doc's `.noun_chunks` attribute.
 A for loop is used to scan all the entities, obtained using doc's `.ents` attribute.
 I check if the entity is present inside the first noun_chunk and if this is the case I add it to the `entity_group` list and if not I add it directly to the `grouped_entities` list.
-Going to the next entity it is the same except for the case in which entity is not present inside the first noun_chunk and `entity_group` is non empty, in this case I add `entity_group` to the `grouped_entities` and I check if the entity is present inside the next noun_chunk.
-I repeat this process for all the entities in the doc and in the end I check if `entity_group` is non empty and has to be added to the `grouped_entities` list and then I return the `grouped_entities` list.
+Going to the next entity it is the same except for the case in which entity is not present inside the first noun_chunk and `entity_group` is non-empty, in this case I add `entity_group` to the `grouped_entities` and I check if the entity is present inside the next noun_chunk.
+I repeat this process for all the entities in the doc and in the end I check if `entity_group` is non-empty and has to be added to the `grouped_entities` list and then I return the `grouped_entities` list.
 
 The output of the `group_named_entities` function for the `"Apple's Steve Jobs died in 2011 in Palo Alto, California."` sentence is:
 
@@ -337,7 +346,7 @@ The `extend_entity_span` function takes as input parameter `doc` (that must be o
 ```python
 def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, use_children_compound: bool = False, use_conll_labels: bool = False) -> List[Tuple[str, str]]:
     if isinstance(doc, str):
-        doc: Doc = spacy_nlp(doc)  # Since `ents` are a property of `Doc` object and with it we have access to all sentence's tokens
+        doc: Doc = spacy_nlp(doc)  # since `ents` are a property of `Doc` object and with it we have access to all sentence's tokens
     elif not isinstance(doc, Doc):
         raise TypeError("You pass a `doc` parameter of a wrong type")
 
@@ -404,18 +413,27 @@ The output of the `extend_entity_span` function for the `"Apple's Steve Jobs die
 ```
 
 
-### evaluate the post-processing on [CoNLL 2003 data](data/conll2003)
+### evaluate the post-processing on [CoNLL 2003 dataset](data/conll2003)
 
-The accuracy of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using the compound relations related to the head of the tokens in the entities is:
+The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using the compound relations related to the head of the tokens in the entities are:
 
 ```python
-tag-level accuracy head: 0.902134
+        accuracy
+B-LOC   0.682254
+B-MISC  0.548433
+B-ORG   0.309452
+B-PER   0.628942
+I-LOC   0.564202
+I-MISC  0.328704
+I-ORG   0.517365
+I-PER   0.791522
+O       0.972195
+total   0.902134
 ```
 
 The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got using the compound relations related to the head of the tokens in the entities are:
 
 ```python
-chunk-level performance head:
        precision    recall  f1 score  support
 LOC     0.685003  0.627098  0.654773     1668
 MISC    0.728033  0.495726  0.589831      702
@@ -424,16 +442,25 @@ PER     0.763922  0.602350  0.673582     1617
 total   0.634203  0.486544  0.550646     5648
 ```
 
-The accuracy of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using the compound relations related to the children of the tokens in the entities is:
+The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using the compound relations related to the children of the tokens in the entities are:
 
 ```python
-tag-level accuracy children: 0.900356
+        accuracy
+B-LOC   0.655875
+B-MISC  0.542735
+B-ORG   0.305238
+B-PER   0.518862
+I-LOC   0.568093
+I-MISC  0.324074
+I-ORG   0.532934
+I-PER   0.796713
+O       0.975593
+total   0.900356
 ```
 
 The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got using the compound relations related to the children of the tokens in the entities are:
 
 ```python
-chunk-level performance children:
        precision    recall  f1 score  support
 LOC     0.737236  0.649281  0.690469     1668
 MISC    0.804301  0.532764  0.640960      702
@@ -442,16 +469,25 @@ PER     0.646417  0.513296  0.572216     1617
 total   0.648017  0.486013  0.555443     5648
 ```
 
-The accuracy of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using both the compound relations related to the head and children of the tokens in the entities is:
+The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using both the compound relations related to the head and children of the tokens in the entities are:
 
 ```python
-tag-level accuracy head + children: 0.893541
+        accuracy
+B-LOC   0.655875
+B-MISC  0.542735
+B-ORG   0.305238
+B-PER   0.518862
+I-LOC   0.571984
+I-MISC  0.328704
+I-ORG   0.535329
+I-PER   0.800173
+O       0.967137
+total   0.893541
 ```
 
 The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got using both the compound relations related to the head and children of the tokens in the entities are:
 
 ```python
-chunk-level performance head + children:
        precision    recall  f1 score  support
 LOC     0.683858  0.612110  0.645998     1668
 MISC    0.729958  0.492877  0.588435      702
@@ -460,8 +496,8 @@ PER     0.638975  0.508967  0.566609     1617
 total   0.598744  0.455737  0.517543     5648
 ```
 
-In conclusion, the use of `compound` dependency relation in this case has a not really good impact, in fact the performances are a bit lower with respect to the first evaluation using only the spaCy pipeline as it is.
-Amongs these possible approaches using the `compound` dependency relation:
+In conclusion, the use of `compound` dependency relation in this case has a not really positive impact, in fact the performances are a bit lower with respect to the first evaluation using only the spaCy pipeline as it is.
+Among these possible approaches using the `compound` dependency relation:
 * The better solution in terms of tag-level accuracy seems using only the compound relations related to the head of the tokens in the entities.
 * The better solution in terms of total precision seems using only the compound relations related to the children of the tokens in the entities.
 * The worst approach in terms of performances seems using both head and children of the tokens in the entities.
