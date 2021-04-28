@@ -5,8 +5,8 @@
 **Table of Contents**
 
 - [1. Evaluate spaCy NER on CoNLL 2003 dataset](#1-evaluate-spacy-ner-on-conll-2003-dataset)
-  - [token-level performance](#token-level-performance)
-  - [chunk-level performance](#chunk-level-performance)
+  - [token-level performances](#token-level-performances)
+  - [chunk-level performances](#chunk-level-performances)
 - [2. Grouping of Entities](#2-grouping-of-entities)
   - [function to group recognized named entities using `noun_chunks` method of spaCy](#function-to-group-recognized-named-entities-using-noun_chunks-method-of-spacy)
   - [analyze the groups in terms of most frequent combinations (i.e. NER types that go together)](#analyze-the-groups-in-terms-of-most-frequent-combinations-ie-ner-types-that-go-together)
@@ -19,9 +19,9 @@
 The assignment is on the intersection of Named Entity Recognition and Dependency Parsing.
 
 1. Evaluate spaCy NER on [CoNLL 2003 dataset](data/conll2003) (provided):
-    * report token-level performance (per class and total)
+    * report token-level performances (per class and total)
         * accuracy of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy)
-    * report chunk-level performance (per class and total)
+    * report chunk-level performances (per class and total)
         * precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total
 
 2. Grouping of Entities.
@@ -97,36 +97,40 @@ Also the tokenization of spaCy is different from the one of the CoNLL 2003 datas
 In the end to make the hypothesis comparable with references, I unified the entity IOB using the token's `.ent_iob_` attribute and the entity type using the token's `.ent_type_` attribute.
 
 
-### token-level performance
+### token-level performances
 
-The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got are:
+The per-class and total token-level performances that I got are:
 
 ```python
-        accuracy
-B-LOC   0.682254
-B-MISC  0.548433
-B-ORG   0.309452
-B-PER   0.628942
-I-LOC   0.560311
-I-MISC  0.324074
-I-ORG   0.514970
-I-PER   0.788062
-O       0.981999
-total   0.910063
+              precision    recall  f1-score   support
+
+       B-LOC      0.759     0.682     0.719      1668
+      B-MISC      0.821     0.548     0.658       702
+       B-ORG      0.503     0.309     0.383      1661
+       B-PER      0.800     0.629     0.704      1617
+       I-LOC      0.535     0.560     0.548       257
+      I-MISC      0.636     0.324     0.429       216
+       I-ORG      0.415     0.515     0.460       835
+       I-PER      0.838     0.788     0.812      1156
+           O      0.949     0.982     0.965     38554
+
+    accuracy                          0.910     46666
+   macro avg      0.695     0.593     0.631     46666
+weighted avg      0.903     0.910     0.904     46666
 ```
 
 
-### chunk-level performance
+### chunk-level performances
 
-The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got are:
+The per-class and total chunk-level performances that I got are:
 
 ```python
-       precision    recall  f1 score  support
-LOC     0.747832  0.672062  0.707925     1668
-MISC    0.810235  0.541311  0.649018      702
-ORG     0.452055  0.278146  0.344391     1661
-PER     0.774194  0.608534  0.681440     1617
-total   0.691622  0.521778  0.594813     5648
+       precision  recall  f1 score  support
+LOC        0.748   0.672     0.708     1668
+MISC       0.810   0.541     0.649      702
+ORG        0.452   0.278     0.344     1661
+PER        0.774   0.609     0.681     1617
+total      0.692   0.522     0.595     5648
 ```
 
 
@@ -415,89 +419,101 @@ The output of the `extend_entity_span` function for the `"Apple's Steve Jobs die
 
 ### evaluate the post-processing on [CoNLL 2003 dataset](data/conll2003)
 
-The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using the compound relations related to the head of the tokens in the entities are:
+The per-class and total token-level performances that I got using the compound relations related to the head of the tokens in the entities are:
 
 ```python
-        accuracy
-B-LOC   0.682254
-B-MISC  0.548433
-B-ORG   0.309452
-B-PER   0.628942
-I-LOC   0.564202
-I-MISC  0.328704
-I-ORG   0.517365
-I-PER   0.791522
-O       0.972195
-total   0.902134
+              precision    recall  f1-score   support
+
+       B-LOC      0.759     0.682     0.719      1668
+      B-MISC      0.821     0.548     0.658       702
+       B-ORG      0.503     0.309     0.383      1661
+       B-PER      0.800     0.629     0.704      1617
+       I-LOC      0.344     0.564     0.428       257
+      I-MISC      0.418     0.329     0.368       216
+       I-ORG      0.360     0.517     0.424       835
+       I-PER      0.804     0.792     0.798      1156
+           O      0.950     0.972     0.961     38554
+
+    accuracy                          0.902     46666
+   macro avg      0.640     0.594     0.605     46666
+weighted avg      0.900     0.902     0.899     46666
 ```
 
-The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got using the compound relations related to the head of the tokens in the entities are:
+The per-class and total chunk-level performances that I got using the compound relations related to the head of the tokens in the entities are:
 
 ```python
-       precision    recall  f1 score  support
-LOC     0.685003  0.627098  0.654773     1668
-MISC    0.728033  0.495726  0.589831      702
-ORG     0.360874  0.228778  0.280029     1661
-PER     0.763922  0.602350  0.673582     1617
-total   0.634203  0.486544  0.550646     5648
+       precision  recall  f1 score  support
+LOC        0.685   0.627     0.655     1668
+MISC       0.728   0.496     0.590      702
+ORG        0.361   0.229     0.280     1661
+PER        0.764   0.602     0.674     1617
+total      0.634   0.487     0.551     5648
 ```
 
-The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using the compound relations related to the children of the tokens in the entities are:
+The per-class and total token-level performances that I got using the compound relations related to the children of the tokens in the entities are:
 
 ```python
-        accuracy
-B-LOC   0.655875
-B-MISC  0.542735
-B-ORG   0.305238
-B-PER   0.518862
-I-LOC   0.568093
-I-MISC  0.324074
-I-ORG   0.532934
-I-PER   0.796713
-O       0.975593
-total   0.900356
+              precision    recall  f1-score   support
+
+       B-LOC      0.748     0.656     0.699      1668
+      B-MISC      0.819     0.543     0.653       702
+       B-ORG      0.500     0.305     0.379      1661
+       B-PER      0.666     0.519     0.583      1617
+       I-LOC      0.432     0.568     0.491       257
+      I-MISC      0.614     0.324     0.424       216
+       I-ORG      0.409     0.533     0.463       835
+       I-PER      0.704     0.797     0.747      1156
+           O      0.949     0.976     0.962     38554
+
+    accuracy                          0.900     46666
+   macro avg      0.649     0.580     0.600     46666
+weighted avg      0.894     0.900     0.895     46666
 ```
 
-The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got using the compound relations related to the children of the tokens in the entities are:
+The per-class and total chunk-level performances that I got using the compound relations related to the children of the tokens in the entities are:
 
 ```python
-       precision    recall  f1 score  support
-LOC     0.737236  0.649281  0.690469     1668
-MISC    0.804301  0.532764  0.640960      702
-ORG     0.449902  0.275738  0.341919     1661
-PER     0.646417  0.513296  0.572216     1617
-total   0.648017  0.486013  0.555443     5648
+       precision  recall  f1 score  support
+LOC        0.737   0.649     0.690     1668
+MISC       0.804   0.533     0.641      702
+ORG        0.450   0.276     0.342     1661
+PER        0.646   0.513     0.572     1617
+total      0.648   0.486     0.555     5648
 ```
 
-The accuracies of correctly recognizing all tokens that belong to named entities (i.e. tag-level accuracy) that I got using both the compound relations related to the head and children of the tokens in the entities are:
+The per-class and total token-level performances that I got using both the compound relations related to the head and children of the tokens in the entities are:
 
 ```python
-        accuracy
-B-LOC   0.655875
-B-MISC  0.542735
-B-ORG   0.305238
-B-PER   0.518862
-I-LOC   0.571984
-I-MISC  0.328704
-I-ORG   0.535329
-I-PER   0.800173
-O       0.967137
-total   0.893541
+              precision    recall  f1-score   support
+
+       B-LOC      0.748     0.656     0.699      1668
+      B-MISC      0.819     0.543     0.653       702
+       B-ORG      0.500     0.305     0.379      1661
+       B-PER      0.666     0.519     0.583      1617
+       I-LOC      0.315     0.572     0.406       257
+      I-MISC      0.418     0.329     0.368       216
+       I-ORG      0.362     0.535     0.432       835
+       I-PER      0.684     0.800     0.738      1156
+           O      0.950     0.967     0.959     38554
+
+    accuracy                          0.894     46666
+   macro avg      0.607     0.581     0.580     46666
+weighted avg      0.892     0.894     0.890     46666
 ```
 
-The precision, recall, f-measure of correctly recognizing all the named entities in a chunk per class and total that I got using both the compound relations related to the head and children of the tokens in the entities are:
+The per-class and total chunk-level performances that I got using both the compound relations related to the head and children of the tokens in the entities are:
 
 ```python
-       precision    recall  f1 score  support
-LOC     0.683858  0.612110  0.645998     1668
-MISC    0.729958  0.492877  0.588435      702
-ORG     0.367816  0.231186  0.283919     1661
-PER     0.638975  0.508967  0.566609     1617
-total   0.598744  0.455737  0.517543     5648
+       precision  recall  f1 score  support
+LOC        0.684   0.612     0.646     1668
+MISC       0.730   0.493     0.588      702
+ORG        0.368   0.231     0.284     1661
+PER        0.639   0.509     0.567     1617
+total      0.599   0.456     0.518     5648
 ```
 
 In conclusion, the use of `compound` dependency relation in this case has a not really positive impact, in fact the performances are a bit lower with respect to the first evaluation using only the spaCy pipeline as it is.
 Among these possible approaches using the `compound` dependency relation:
-* The better solution in terms of tag-level accuracy seems using only the compound relations related to the head of the tokens in the entities.
-* The better solution in terms of total precision seems using only the compound relations related to the children of the tokens in the entities.
+* The better solution in terms of token-level performances seems using only the compound relations related to the head of the tokens in the entities.
+* The better solution in terms of chunk-level performances seems using only the compound relations related to the children of the tokens in the entities.
 * The worst approach in terms of performances seems using both head and children of the tokens in the entities.

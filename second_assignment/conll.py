@@ -5,11 +5,7 @@ Modified version of https://pypi.org/project/conlleval/
 """
 
 
-def tok_stats():
-    return {"cor": 0, "ref": 0}
-
-
-def seg_stats():
+def stats():
     return {"cor": 0, "hyp": 0, "ref": 0}
 
 
@@ -34,11 +30,9 @@ def align_hyp(ref, hyp):
 
 
 def conlleval(data, otag="O"):
-    # token, segment & class level counts for TP, TP+FP, TP+FN
-    tok = tok_stats()
-    tok_cls = {}
-    seg = seg_stats()
-    seg_cls = {}
+    # segment & class level counts for TP, TP+FP, TP+FN
+    seg = stats()
+    cls = {}
 
     for sent in data:
 
@@ -46,7 +40,6 @@ def conlleval(data, otag="O"):
         prev_hyp = otag         # previous hypothesis label
         prev_ref_iob = None     # previous reference label IOB
         prev_hyp_iob = None     # previous hypothesis label IOB
-
         in_correct = False      # currently processed chunks is correct until now
 
         for token in sent:
@@ -60,21 +53,18 @@ def conlleval(data, otag="O"):
             ref_b = is_boc(ref, ref_iob, prev_ref, prev_ref_iob, otag)
             hyp_b = is_boc(hyp, hyp_iob, prev_hyp, prev_hyp_iob, otag)
 
-            if not tok_cls.get(token[-2]) and token[-2]:
-                tok_cls[token[-2]] = tok_stats()
+            if not cls.get(ref) and ref:
+                cls[ref] = stats()
 
-            if not seg_cls.get(ref) and ref:
-                seg_cls[ref] = seg_stats()
-
-            if not seg_cls.get(hyp) and hyp:
-                seg_cls[hyp] = seg_stats()
+            if not cls.get(hyp) and hyp:
+                cls[hyp] = stats()
 
             # segment-level counts
             if in_correct:
                 if ref_e and hyp_e and prev_hyp == prev_ref:
                     in_correct = False
                     seg["cor"] += 1
-                    seg_cls[prev_ref]["cor"] += 1
+                    cls[prev_ref]["cor"] += 1
 
                 elif ref_e != hyp_e or hyp != ref:
                     in_correct = False
@@ -84,19 +74,11 @@ def conlleval(data, otag="O"):
 
             if ref_b:
                 seg["ref"] += 1
-                seg_cls[ref]["ref"] += 1
+                cls[ref]["ref"] += 1
 
             if hyp_b:
                 seg["hyp"] += 1
-                seg_cls[hyp]["hyp"] += 1
-
-            # token-level counts
-            if token[-2] == token[-1]:
-                tok["cor"] += 1
-                tok_cls[token[-2]]["cor"] += 1
-
-            tok["ref"] += 1
-            tok_cls[token[-2]]["ref"] += 1
+                cls[hyp]["hyp"] += 1
 
             prev_ref = ref
             prev_hyp = hyp
@@ -105,24 +87,22 @@ def conlleval(data, otag="O"):
 
         if in_correct:
             seg["cor"] += 1
-            seg_cls[prev_ref]["cor"] += 1
+            cls[prev_ref]["cor"] += 1
 
-    return summarize_tok(tok, tok_cls), summarize_seg(seg, seg_cls)
+    return summarize(seg, cls)
 
 
 def parse_iob(t):
-    m = re.match(r"^([^-]*)-(.*)$", t)
+    m = re.match(r'^([^-]*)-(.*)$', t)
     return m.groups() if m else (t, None)
 
 
 def is_boc(lbl, iob, prev_lbl, prev_iob, otag="O"):
     """
     is beginning of a chunk
-
     supports: IOB, IOBE, BILOU schemes
         - {E,L} --> last
         - {S,U} --> unit
-
     :param lbl: current label
     :param iob: current iob
     :param prev_lbl: previous label
@@ -147,11 +127,9 @@ def is_boc(lbl, iob, prev_lbl, prev_iob, otag="O"):
 def is_eoc(lbl, iob, prev_lbl, prev_iob, otag="O"):
     """
     is end of a chunk
-
     supports: IOB, IOBE, BILOU schemes
         - {E,L} --> last
         - {S,U} --> unit
-
     :param lbl: current label
     :param iob: current iob
     :param prev_lbl: previous label
@@ -181,27 +159,17 @@ def score(cor_cnt, hyp_cnt, ref_cnt):
     # recall
     recall = 0 if ref_cnt == 0 else cor_cnt / ref_cnt
     # f-measure (f1)
-    f1 = 0 if precision+recall == 0 else (2*precision*recall)/(precision+recall)
+    f1 = 0 if precision + recall == 0 else (2 * precision * recall) / (precision + recall)
     return {"precision": precision, "recall": recall, "f1 score": f1, "support": ref_cnt}
 
 
-def summarize_seg(seg, seg_cls):
+def summarize(seg, cls):
     # class-level
-    keys = list(seg_cls.keys())
+    keys = list(cls.keys())
     keys.sort()
-    res = {label: score(seg_cls[label]["cor"], seg_cls[label]["hyp"], seg_cls[label]["ref"]) for label in set(keys)}
+    res = {label: score(cls[label]["cor"], cls[label]["hyp"], cls[label]["ref"]) for label in keys}
     # micro
     res.update({"total": score(seg.get("cor", 0), seg.get("hyp", 0), seg.get("ref", 0))})
-    return res
-
-
-def summarize_tok(tok, tok_cls):
-    # class-level
-    keys = list(tok_cls.keys())
-    keys.sort()
-    res = {label: {"accuracy": tok_cls[label]["cor"]/tok_cls[label]["ref"]} for label in set(keys)}
-    # micro
-    res.update({"total": {"accuracy": tok.get("cor", 0)/tok.get("ref", 0)}})
     return res
 
 

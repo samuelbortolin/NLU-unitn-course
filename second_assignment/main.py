@@ -4,6 +4,7 @@ from typing import List, Union, Tuple, Dict
 
 import pandas as pd
 import spacy
+from sklearn.metrics import classification_report
 from spacy import Language
 from spacy.tokens import Doc, Span
 
@@ -16,7 +17,7 @@ spacy_nlp: Language = spacy.load("en_core_web_sm")
 # 1. Evaluate spaCy NER on CoNLL 2003 dataset (provided)
 
 # spaCy NER labels are different from the one of the CoNLL 2003 dataset, I had to convert some of them and ignore others
-print(f"spaCy NER labels: {spacy_nlp.get_pipe('ner').labels}")
+print(f"spaCy NER labels: {set(spacy_nlp.get_pipe('ner').labels)}")
 print(f"CoNLL 2003 labels: {get_chunks('data/conll2003/test.txt', fs=' ', otag='O')}")
 print()
 
@@ -192,16 +193,16 @@ if __name__ == "__main__":
 
         hyps.append(hyp)
 
-    token_level_performance, chunk_level_performances = evaluate(refs, hyps)
-
     # token-level performance (per class and total)
-    print(f"tag-level accuracy:")
-    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
+    token_level_performance = classification_report([token[-1] for sent in refs for token in sent], [token[-1] for sent in hyps for token in sent], digits=3)
+    print(f"token-level performances:")
+    print(token_level_performance)
     print()
 
     # chunk-level performance (per class and total)
-    print("chunk-level performance:")
-    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
+    chunk_level_performances = evaluate(refs, hyps)
+    print("chunk-level performances:")
+    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index").round(decimals=3))
     print()
 
     # test function to group recognized named entities using `noun_chunks` method of spaCy
@@ -296,32 +297,32 @@ if __name__ == "__main__":
         hyps_children.append(hyp_children)
         hyps_head_and_children.append(hyp_head_and_children)
 
-    token_level_performance, chunk_level_performances = evaluate(refs, hyps_head)
-
-    print(f"tag-level accuracy head:")
-    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
+    token_level_performance = classification_report([token[-1] for sent in refs for token in sent], [token[-1] for sent in hyps_head for token in sent], digits=3)
+    print(f"token-level performances head:")
+    print(token_level_performance)
     print()
 
-    print("chunk-level performance head:")
-    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
+    chunk_level_performances = evaluate(refs, hyps_head)
+    print("chunk-level performances head:")
+    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index").round(decimals=3))
     print()
 
-    token_level_performance, chunk_level_performances = evaluate(refs, hyps_children)
-
-    print(f"tag-level accuracy children:")
-    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
+    token_level_performance = classification_report([token[-1] for sent in refs for token in sent], [token[-1] for sent in hyps_children for token in sent], digits=3)
+    print(f"token-level performances children:")
+    print(token_level_performance)
     print()
 
-    print("chunk-level performance children:")
-    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
+    chunk_level_performances = evaluate(refs, hyps_children)
+    print("chunk-level performances children:")
+    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index").round(decimals=3))
     print()
 
-    token_level_performance, chunk_level_performances = evaluate(refs, hyps_head_and_children)
-
-    print(f"tag-level accuracy head + children:")
-    print(pd.DataFrame().from_dict(token_level_performance, orient="index"))
+    token_level_performance = classification_report([token[-1] for sent in refs for token in sent], [token[-1] for sent in hyps_head_and_children for token in sent], digits=3)
+    print(f"token-level performances head + children:")
+    print(token_level_performance)
     print()
 
-    print("chunk-level performance head + children:")
-    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index"))
+    chunk_level_performances = evaluate(refs, hyps_head_and_children)
+    print("chunk-level performances head + children:")
+    print(pd.DataFrame().from_dict(chunk_level_performances, orient="index").round(decimals=3))
     print()
