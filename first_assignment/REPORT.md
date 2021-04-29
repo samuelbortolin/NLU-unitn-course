@@ -54,7 +54,7 @@ wrong_span: Span = spacy_nlp(example_sentence)[5:8]
 
 ### 1. extract a path of dependency relations from the ROOT to a token
 
-The `extract_path_of_dependency_relations` function takes as input parameter `sentence` (that must be string, otherwise a `TypeError` is raised) and returns the list of dependency relations between each token in the sentence from the root to the token.
+The `extract_path_of_dependency_relations` function takes as input parameter `sentence` (that must be a string, otherwise a `TypeError` is raised) and returns the list of dependency relations between each token in the sentence from the root to the token.
 
 ```python
 def extract_path_of_dependency_relations(sentence: str) -> List[List[str]]:
@@ -110,7 +110,7 @@ The output of the `extract_path_of_dependency_relations` function for the exampl
 
 ### 2. extract subtree of dependents given a token
 
-The `extract_dependents_subtree` function takes as input parameter `sentence` (that must be string, otherwise a `TypeError` is raised) and returns the subtree of dependents of each token contained in the sentence.
+The `extract_dependents_subtree` function takes as input parameter `sentence` (that must be a string, otherwise a `TypeError` is raised) and returns the subtree of dependents of each token contained in the sentence.
 
 ```python
 def extract_dependents_subtree(sentence: str) -> List[List[str]]:
@@ -157,7 +157,7 @@ The output of the `extract_dependents_subtree` function for the example sentence
 
 ### 3. check if a given list of tokens (segment of a sentence) forms a subtree
 
-The `check_if_tokens_form_a_subtree` function takes as input parameters `sentence` (that must be string, otherwise a `TypeError` is raised) and `tokens` (that must be of the one of the following types `Span`, `List[Token]`, `List[str]`, `str`, otherwise a `TypeError` is raised) and returns `True` or `False` based on the sequence forming a subtree or not.
+The `check_if_tokens_form_a_subtree` function takes as input parameters `sentence` (that must be a string, otherwise a `TypeError` is raised) and `tokens` (that must be of one of the following types `Span`, `List[Token]`, `List[str]`, `str`, otherwise a `TypeError` is raised) and returns `True` or `False` based on the sequence forming a subtree or not.
 
 ```python
 def check_if_tokens_form_a_subtree(sentence: str, tokens: Union[Span, List[Token], List[str], str]) -> bool:
@@ -206,7 +206,7 @@ Does this wrong span `['a', 'telescope', ',']` (passing the span as tokens strin
 
 ### 4. identify head of a span, given its tokens
 
-The `identify_head_of_a_span` function takes as input parameter `span` (that must be of the one of the following types `Span`, `List[Token]`, `List[str]`, `str`, otherwise a `TypeError` is raised) and returns the root of that span.
+The `identify_head_of_a_span` function takes as input parameter `span` (that must be of one of the following types `Span`, `List[Token]`, `List[str]`, `str`, otherwise a `TypeError` is raised) and returns the root of that span.
 
 ```python
 def identify_head_of_a_span(span: Union[Span, List[Token], List[str], str]) -> str:
@@ -245,7 +245,7 @@ The head of this example span `['a', 'man', 'with', 'a', 'telescope']` (passing 
 
 ### 5. extract sentence subject, direct object and indirect object spans
 
-The `extract_subj_dobj_iobj` function takes as input parameter `sentence` (that must be string, otherwise a `TypeError` is raised) and returns a dictionary containing as key the possible dependency relations `'subj'`, `'dobj'`, `'iobj'` and as value a list containing the tokens of the span that is related to the dependency relation expressed by the key (if a dependency relation is not present its associated list will be empty).
+The `extract_subj_dobj_iobj` function takes as input parameter `sentence` (that must be a string, otherwise a `TypeError` is raised) and returns a dictionary containing as key the possible dependency relations `'subj'`, `'dobj'`, `'iobj'` and as value a list containing the tokens of the span that is related to the dependency relation expressed by the key (if a dependency relation is not present its associated list will be empty).
 
 ```python
 def extract_subj_dobj_iobj(sentence: str) -> Dict[str, List[str]]:

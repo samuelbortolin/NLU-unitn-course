@@ -138,7 +138,7 @@ total      0.692   0.522     0.595     5648
 
 ### function to group recognized named entities using `noun_chunks` method of [spaCy](https://spacy.io/usage/linguistic-features#noun-chunks)
 
-The `group_named_entities` function takes as input parameter `doc` (that must be of the one of the following types `str`, `Doc`, otherwise a `TypeError` is raised), and the `use_conll_labels` (that must be of a boolean, otherwise a `TypeError` is raised) for deciding which labels to use and returns a list-of-lists where outer list is the list of groups/chunks and the inner lists are lists of entity labels.
+The `group_named_entities` function takes as input parameter `doc` (that must be of one of the following types `str`, `Doc`, otherwise a `TypeError` is raised), and the `use_conll_labels` (that must be a boolean, otherwise a `TypeError` is raised) for deciding which labels to use and returns a list-of-lists where outer list is the list of groups/chunks and the inner lists are lists of entity labels.
 
 ```python
 def group_named_entities(doc: Union[str, Doc], use_conll_labels: bool = False) -> List[List[str]]:
@@ -345,7 +345,7 @@ The most attached couples using these labels are:
 
 ### function that extends the entity span to cover the full noun-compounds
 
-The `extend_entity_span` function takes as input parameter `doc` (that must be of the one of the following types `str`, `Doc`, otherwise a `TypeError` is raised), the `use_head_compound` (that must be of a boolean, otherwise a `TypeError` is raised) for using the tokens that are in `compound` dependency relation with the entity tokens, the `use_children_compound` (that must be of a boolean, otherwise a `TypeError` is raised) for using the child tokens having a `compound` dependency relation with the entity tokens, and the `use_conll_labels` (that must be of a boolean, otherwise a `TypeError` is raised) for deciding which labels to use and returns a list-of-tuples where the list has the length of the tokens in the sentence and the tuples contain the token and the IOB + entity label.
+The `extend_entity_span` function takes as input parameter `doc` (that must be of one of the following types `str`, `Doc`, otherwise a `TypeError` is raised), the `use_head_compound` (that must be a boolean, otherwise a `TypeError` is raised) for looking for the tokens that are in `compound` dependency relation with the entity tokens, the `use_children_compound` (that must be a boolean, otherwise a `TypeError` is raised) for using the child tokens having a `compound` dependency relation with the entity tokens, and the `use_conll_labels` (that must be a boolean, otherwise a `TypeError` is raised) for deciding which labels to use and returns a list-of-tuples where the list has the length of the tokens in the sentence and the tuples contain the token and the IOB + entity label.
 
 ```python
 def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, use_children_compound: bool = False, use_conll_labels: bool = False) -> List[Tuple[str, str]]:
@@ -368,13 +368,13 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
         entity: Dict[int, str] = {}
         for entity_token in ent:
             entity[entity_token.i] = entity_token.text
-            if use_head_compound:
-                if entity_token.dep_ == "compound":  # find if the entity tokens are in `compound` dependency relation with other tokens
-                    entity[entity_token.head.i] = entity_token.head.text
-            if use_children_compound:
-                for child in entity_token.children:
-                    if child.dep_ == "compound":  # find the child tokens having a `compound` dependency relation with the entity tokens
-                        entity[child.i] = child.text
+            token_to_check = entity_token
+            if use_head_compound:  # look if the entity tokens are in `compound` dependency relation with other tokens and look for the head from which `compound` relations are originated
+                while token_to_check.dep_ == "compound":
+                    token_to_check = token_to_check.head
+                    entity[token_to_check.i] = token_to_check.text
+            if use_children_compound:  # look if the children tokens have a `compound` dependency relation with the entity tokens (or if `use_head_compound` is True with the head from which `compound` relations are originated)
+                entity = check_children(token_to_check, entity)
 
         keys: List[int] = list(entity.keys())
         keys.sort()
@@ -399,14 +399,24 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
             extended_entity_spans.append((doc_token.text, "O"))
 
     return extended_entity_spans  # the output is a list-of-tuples where the list has the length of the tokens in the sentence and the tuples contain the token and the iob + entity label
+
+
+def check_children(token_to_check: Token, entity: Dict[int, str]) -> Dict[int, str]:
+    for child in token_to_check.children:
+        if child.dep_ == "compound":
+            entity[child.i] = child.text
+            entity = check_children(child, entity)
+    return entity
 ```
 
 To do that, the doc is first parsed to get a Doc object of spaCy unless it is not already so.
 A for loop is used to scan all the entities, obtained using doc's `.ents` attribute.
 A for loop is used to scan all the tokens of an entity.
-I store its position in the sentence and its text into the `entity` dictionary.
-If `use_head_compound` is set to `True` using the token's `.dep_` attribute I get its dependency relation, if it is equal to `'compound'` I store its head position in the sentence and its text into the `entity` dictionary.
-If `use_children_compound` is set to `True` using the token's `.children` attribute I iterate over its children. If the dependency relation of a token's child is equal to `'compound'` I store its position in the sentence and its text into the `entity` dictionary.
+I store its position in the sentence and its text into the `entity` dictionary and I set `token_to_check = entity_token`.
+
+* If `use_head_compound` is set to `True` using the token's `.dep_` attribute I get the `token_to_check` dependency relation, if it is equal to `'compound'` I store its head position in the sentence and its text into the `entity` dictionary. I go ahead updating `token_to_check` and looking for the head from which `compound` relations are originated.
+* If `use_children_compound` is set to `True` I call the `check_children` recursive function. Using the token's `.children` attribute I iterate over `token_to_check` children. If the dependency relation of a token's child is equal to `'compound'` I store its position in the sentence and its text into the `entity` dictionary. Then, I go ahead recursively calling `check_children` passing the child.
+
 Then sorting the keys of the `entity` dictionary I assign the correct IOB + entity label and I store them in the `entities` dictionary.
 I repeat this process for all the entities and in the end I iterate over all the tokens of the document to assign to the missing tokens that are not present in the `entities` dictionary the `O` tag.
 
@@ -419,7 +429,7 @@ The output of the `extend_entity_span` function for the `"Apple's Steve Jobs die
 
 ### evaluate the post-processing on [CoNLL 2003 dataset](data/conll2003)
 
-The per-class and total token-level performances that I got using the compound relations related to the head of the tokens in the entities are:
+The per-class and total token-level performances that I got using the compound relations related to the head of the tokens in the entities (setting `use_head_compound` to `True`) are:
 
 ```python
               precision    recall  f1-score   support
@@ -428,88 +438,88 @@ The per-class and total token-level performances that I got using the compound r
       B-MISC      0.821     0.548     0.658       702
        B-ORG      0.503     0.309     0.383      1661
        B-PER      0.800     0.629     0.704      1617
-       I-LOC      0.344     0.564     0.428       257
-      I-MISC      0.418     0.329     0.368       216
-       I-ORG      0.360     0.517     0.424       835
-       I-PER      0.804     0.792     0.798      1156
-           O      0.950     0.972     0.961     38554
+       I-LOC      0.337     0.576     0.425       257
+      I-MISC      0.401     0.329     0.361       216
+       I-ORG      0.356     0.517     0.421       835
+       I-PER      0.802     0.792     0.797      1156
+           O      0.950     0.971     0.960     38554
 
     accuracy                          0.902     46666
-   macro avg      0.640     0.594     0.605     46666
-weighted avg      0.900     0.902     0.899     46666
+   macro avg      0.637     0.595     0.603     46666
+weighted avg      0.900     0.902     0.898     46666
 ```
 
-The per-class and total chunk-level performances that I got using the compound relations related to the head of the tokens in the entities are:
+The per-class and total chunk-level performances that I got using the compound relations related to the head of the tokens in the entities (setting `use_head_compound` to `True`) are:
 
 ```python
        precision  recall  f1 score  support
-LOC        0.685   0.627     0.655     1668
-MISC       0.728   0.496     0.590      702
-ORG        0.361   0.229     0.280     1661
+LOC        0.683   0.626     0.654     1668
+MISC       0.726   0.494     0.588      702
+ORG        0.360   0.229     0.280     1661
 PER        0.764   0.602     0.674     1617
-total      0.634   0.487     0.551     5648
+total      0.633   0.486     0.550     5648
 ```
 
-The per-class and total token-level performances that I got using the compound relations related to the children of the tokens in the entities are:
+The per-class and total token-level performances that I got using the compound relations related to the children of the tokens in the entities (setting `use_children_compound` to `True`) are:
 
 ```python
               precision    recall  f1-score   support
 
-       B-LOC      0.748     0.656     0.699      1668
-      B-MISC      0.819     0.543     0.653       702
-       B-ORG      0.500     0.305     0.379      1661
-       B-PER      0.666     0.519     0.583      1617
-       I-LOC      0.432     0.568     0.491       257
+       B-LOC      0.751     0.647     0.695      1668
+      B-MISC      0.822     0.540     0.652       702
+       B-ORG      0.498     0.299     0.374      1661
+       B-PER      0.671     0.519     0.586      1617
+       I-LOC      0.408     0.553     0.469       257
       I-MISC      0.614     0.324     0.424       216
-       I-ORG      0.409     0.533     0.463       835
-       I-PER      0.704     0.797     0.747      1156
-           O      0.949     0.976     0.962     38554
+       I-ORG      0.402     0.526     0.456       835
+       I-PER      0.645     0.797     0.713      1156
+           O      0.950     0.974     0.962     38554
 
-    accuracy                          0.900     46666
-   macro avg      0.649     0.580     0.600     46666
-weighted avg      0.894     0.900     0.895     46666
+    accuracy                          0.898     46666
+   macro avg      0.640     0.575     0.592     46666
+weighted avg      0.893     0.898     0.893     46666
 ```
 
-The per-class and total chunk-level performances that I got using the compound relations related to the children of the tokens in the entities are:
+The per-class and total chunk-level performances that I got using the compound relations related to the children of the tokens in the entities (setting `use_children_compound` to `True`) are:
 
 ```python
        precision  recall  f1 score  support
-LOC        0.737   0.649     0.690     1668
-MISC       0.804   0.533     0.641      702
-ORG        0.450   0.276     0.342     1661
-PER        0.646   0.513     0.572     1617
-total      0.648   0.486     0.555     5648
+LOC        0.740   0.640     0.687     1668
+MISC       0.807   0.530     0.640      702
+ORG        0.441   0.266     0.331     1661
+PER        0.648   0.509     0.570     1617
+total      0.648   0.479     0.550     5648
 ```
 
-The per-class and total token-level performances that I got using both the compound relations related to the head and children of the tokens in the entities are:
+The per-class and total token-level performances that I got using both the compound relations related to the head and children of the tokens in the entities (setting both `use_head_compound` and `use_children_compound` to `True`) are:
 
 ```python
               precision    recall  f1-score   support
 
-       B-LOC      0.748     0.656     0.699      1668
-      B-MISC      0.819     0.543     0.653       702
-       B-ORG      0.500     0.305     0.379      1661
-       B-PER      0.666     0.519     0.583      1617
-       I-LOC      0.315     0.572     0.406       257
-      I-MISC      0.418     0.329     0.368       216
-       I-ORG      0.362     0.535     0.432       835
-       I-PER      0.684     0.800     0.738      1156
-           O      0.950     0.967     0.959     38554
+       B-LOC      0.751     0.647     0.695      1668
+      B-MISC      0.820     0.538     0.650       702
+       B-ORG      0.498     0.298     0.373      1661
+       B-PER      0.669     0.518     0.584      1617
+       I-LOC      0.278     0.568     0.373       257
+      I-MISC      0.387     0.333     0.358       216
+       I-ORG      0.343     0.531     0.416       835
+       I-PER      0.624     0.800     0.701      1156
+           O      0.951     0.963     0.957     38554
 
-    accuracy                          0.894     46666
-   macro avg      0.607     0.581     0.580     46666
-weighted avg      0.892     0.894     0.890     46666
+    accuracy                          0.889     46666
+   macro avg      0.591     0.577     0.568     46666
+weighted avg      0.891     0.889     0.887     46666
 ```
 
-The per-class and total chunk-level performances that I got using both the compound relations related to the head and children of the tokens in the entities are:
+The per-class and total chunk-level performances that I got using both the compound relations related to the head and children of the tokens in the entities (setting both `use_head_compound` and `use_children_compound` to `True`) are:
 
 ```python
        precision  recall  f1 score  support
-LOC        0.684   0.612     0.646     1668
-MISC       0.730   0.493     0.588      702
-ORG        0.368   0.231     0.284     1661
-PER        0.639   0.509     0.567     1617
-total      0.599   0.456     0.518     5648
+LOC        0.686   0.594     0.637     1668
+MISC       0.732   0.481     0.581      702
+ORG        0.355   0.215     0.268     1661
+PER        0.638   0.502     0.562     1617
+total      0.597   0.442     0.508     5648
 ```
 
 In conclusion, the use of `compound` dependency relation in this case has a not really positive impact, in fact the performances are a bit lower with respect to the first evaluation using only the spaCy pipeline as it is.

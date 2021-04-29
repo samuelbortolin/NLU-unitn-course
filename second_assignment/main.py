@@ -6,7 +6,7 @@ import pandas as pd
 import spacy
 from sklearn.metrics import classification_report
 from spacy import Language
-from spacy.tokens import Doc, Span
+from spacy.tokens import Doc, Span, Token
 
 from conll import get_chunks, read_corpus_conll, evaluate
 
@@ -128,13 +128,13 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
         entity: Dict[int, str] = {}
         for entity_token in ent:
             entity[entity_token.i] = entity_token.text
-            if use_head_compound:
-                if entity_token.dep_ == "compound":  # find if the entity tokens are in `compound` dependency relation with other tokens
-                    entity[entity_token.head.i] = entity_token.head.text
-            if use_children_compound:
-                for child in entity_token.children:
-                    if child.dep_ == "compound":  # find the child tokens having a `compound` dependency relation with the entity tokens
-                        entity[child.i] = child.text
+            token_to_check = entity_token
+            if use_head_compound:  # look if the entity tokens are in `compound` dependency relation with other tokens and look for the head from which `compound` relations are originated
+                while token_to_check.dep_ == "compound":
+                    token_to_check = token_to_check.head
+                    entity[token_to_check.i] = token_to_check.text
+            if use_children_compound:  # look if the children tokens have a `compound` dependency relation with the entity tokens (or if `use_head_compound` is True with the head from which `compound` relations are originated)
+                entity = check_children(token_to_check, entity)
 
         keys: List[int] = list(entity.keys())
         keys.sort()
@@ -159,6 +159,14 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
             extended_entity_spans.append((doc_token.text, "O"))
 
     return extended_entity_spans  # the output is a list-of-tuples where the list has the length of the tokens in the sentence and the tuples contain the token and the iob + entity label
+
+
+def check_children(token_to_check: Token, entity: Dict[int, str]) -> Dict[int, str]:
+    for child in token_to_check.children:
+        if child.dep_ == "compound":
+            entity[child.i] = child.text
+            entity = check_children(child, entity)
+    return entity
 
 
 if __name__ == "__main__":
