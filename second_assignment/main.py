@@ -132,9 +132,10 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
             if use_head_compound:  # look if the entity tokens are in `compound` dependency relation with other tokens and look for the head from which `compound` relations are originated
                 while token_to_check.dep_ == "compound":
                     token_to_check = token_to_check.head
-                    entity[token_to_check.i] = token_to_check.text
+                    if not token_to_check.ent_type_ or token_to_check.ent_type_ == ent.label_:
+                        entity[token_to_check.i] = token_to_check.text
             if use_children_compound:  # look if the children tokens have a `compound` dependency relation with the entity tokens (or if `use_head_compound` is True with the head from which `compound` relations are originated)
-                entity = check_children(token_to_check, entity)
+                entity = check_children(token_to_check, entity, ent.label_)
 
         keys: List[int] = list(entity.keys())
         keys.sort()
@@ -161,11 +162,12 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
     return extended_entity_spans  # the output is a list-of-tuples where the list has the length of the tokens in the sentence and the tuples contain the token and the iob + entity label
 
 
-def check_children(token_to_check: Token, entity: Dict[int, str]) -> Dict[int, str]:
+def check_children(token_to_check: Token, entity: Dict[int, str], ent_label: str) -> Dict[int, str]:
     for child in token_to_check.children:
         if child.dep_ == "compound":
-            entity[child.i] = child.text
-            entity = check_children(child, entity)
+            if not child.ent_type_ or child.ent_type_ == ent_label:
+                entity[child.i] = child.text
+                entity = check_children(child, entity, ent_label)
     return entity
 
 
