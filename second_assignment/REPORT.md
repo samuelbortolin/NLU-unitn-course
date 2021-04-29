@@ -374,6 +374,8 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
                     token_to_check = token_to_check.head
                     if not token_to_check.ent_type_ or token_to_check.ent_type_ == ent.label_:
                         entity[token_to_check.i] = token_to_check.text
+                    else:
+                        break
             if use_children_compound:  # look if the children tokens have a `compound` dependency relation with the entity tokens (or if `use_head_compound` is True with the head from which `compound` relations are originated)
                 entity = check_children(token_to_check, entity, ent.label_)
 
@@ -416,8 +418,8 @@ A for loop is used to scan all the entities, obtained using doc's `.ents` attrib
 A for loop is used to scan all the tokens of an entity.
 I store its position in the sentence and its text into the `entity` dictionary and I set `token_to_check = entity_token`.
 
-* If `use_head_compound` is set to `True` using the token's `.dep_` attribute I get the `token_to_check` dependency relation, if it is equal to `'compound'` I store its head position in the sentence and its text into the `entity` dictionary (only if it has no `ent_type_` or it is equal to the entity one). I go ahead updating `token_to_check` and looking for the head from which `compound` relations are originated.
-* If `use_children_compound` is set to `True` I call the `check_children` recursive function. Using the token's `.children` attribute I iterate over `token_to_check` children. If the dependency relation of a token's child is equal to `'compound'` I store its position in the sentence and its text into the `entity` dictionary (only if it has no `ent_type_` or it is equal to the entity one). Then, I go ahead recursively calling `check_children` passing the child of that particular token.
+* If `use_head_compound` is set to `True` using the token's `.dep_` attribute I get the `token_to_check` dependency relation, if it is equal to `'compound'` I store its head position in the sentence and its text into the `entity` dictionary (only if it has no `ent_type_` or it is equal to the entity one otherwise I go ahead with the function). I go ahead updating `token_to_check` and looking for the head from which `compound` relations are originated.
+* If `use_children_compound` is set to `True` I call the `check_children` recursive function. Using the token's `.children` attribute I iterate over `token_to_check` children. If the dependency relation of a token's child is equal to `'compound'` I store its position in the sentence and its text into the `entity` dictionary (only if it has no `ent_type_` or it is equal to the entity one otherwise I go ahead with the function). Then, I go ahead recursively calling `check_children` passing the child of that particular token.
 
 Then sorting the keys of the `entity` dictionary I assign the correct IOB + entity label and I store them in the `entities` dictionary.
 I repeat this process for all the entities and in the end I iterate over all the tokens of the document to assign to the missing tokens that are not present in the `entities` dictionary the `O` tag.
@@ -440,7 +442,7 @@ The per-class and total token-level performances that I got using the compound r
       B-MISC      0.821     0.548     0.658       702
        B-ORG      0.503     0.309     0.383      1661
        B-PER      0.800     0.629     0.704      1617
-       I-LOC      0.339     0.576     0.427       257
+       I-LOC      0.340     0.576     0.428       257
       I-MISC      0.401     0.329     0.361       216
        I-ORG      0.356     0.517     0.422       835
        I-PER      0.803     0.792     0.797      1156
@@ -455,7 +457,7 @@ The per-class and total chunk-level performances that I got using the compound r
 
 ```python
        precision  recall  f1 score  support
-LOC        0.683   0.627     0.654     1668
+LOC        0.684   0.627     0.654     1668
 MISC       0.726   0.494     0.588      702
 ORG        0.361   0.229     0.280     1661
 PER        0.764   0.602     0.674     1617

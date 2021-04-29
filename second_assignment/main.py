@@ -134,6 +134,8 @@ def extend_entity_span(doc: Union[str, Doc], use_head_compound: bool = False, us
                     token_to_check = token_to_check.head
                     if not token_to_check.ent_type_ or token_to_check.ent_type_ == ent.label_:
                         entity[token_to_check.i] = token_to_check.text
+                    else:
+                        break
             if use_children_compound:  # look if the children tokens have a `compound` dependency relation with the entity tokens (or if `use_head_compound` is True with the head from which `compound` relations are originated)
                 entity = check_children(token_to_check, entity, ent.label_)
 
