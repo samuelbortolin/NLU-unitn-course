@@ -30,6 +30,13 @@ My information as Artificial Intelligence Systems student:
     NLU-unitn-course
     ├── final_project           [directory containing the final project of the course]
     |   ├── data                    [data directory]
+    |   |   └── aclImdb               [directory containing the dataset files]
+    |   |       ├── test                [test directory of the dataset]
+    |   |       |   ├── neg               [test negative directory of the dataset]
+    |   |       |   └── pos               [test positive directory of the dataset]
+    |   |       └── train               [train file of the dataset]
+    |   |           ├── neg               [train negative directory of the dataset]
+    |   |           └── pos               [train positive directory of the dataset]
     |   ├── main                    [script containing the main code and functions implemented]
     |   ├── README                  [readme with instructions for running the code]
     |   ├── report                  [report briefly describing the logic behind the code]
