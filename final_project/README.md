@@ -49,6 +49,6 @@ The first cell of the notebook forces the installation of the current latest ver
 
 ## Usage
 
-The main notebook can be executed in [Google Colab](https://colab.research.google.com/notebooks/) loading the notebook or on your local pc using Jupyter and run all the code.
+The main notebook can be executed in [Google Colab](https://colab.research.google.com/notebooks/) loading the notebook or on your local pc using Jupyter and run all the cells.
 
 It is recommended the use of a GPU that supports CUDA framework.
