@@ -1,0 +1,6 @@
+spacy
+nltk
+scikit-learn
+numpy
+torch
+torchtext

@@ -42,17 +42,13 @@ Required Python packages can be installed running the following command:
     pip3 install -r requirements.txt
 ```
 
-Once the requirements are installed, the code requires the English models that could be installed running: 
+All the required packages are already installed on [Google Colab](https://colab.research.google.com/notebooks/).
 
-```bash
-    python3 -m spacy download en_core_web_sm
-```
+The first cell of the code forces the installation of the current latest version of [spaCy](https://spacy.io/usage/v3-1) and the installation of the required English model.
 
 
 ## Usage
 
-The main script can be run with the following command:
+The main notebook can be executed in [Google Colab](https://colab.research.google.com/notebooks/) loading the notebook or on your local pc using Jupyter and run all the code.
 
-```bash
-    python3 main.py
-```
+It is recommended the use of a GPU that supports CUDA framework.

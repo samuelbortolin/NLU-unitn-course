@@ -37,7 +37,7 @@ Required Python packages can be installed running the following command:
     pip3 install -r requirements.txt
 ```
 
-Once the requirements are installed, the code requires the English models that could be installed running: 
+Once the requirements are installed, the code requires the English model that could be installed running: 
 
 ```bash
     python3 -m spacy download en_core_web_sm
